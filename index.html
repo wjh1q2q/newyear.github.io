@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新年祝福弹幕</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, #e6f3ff 0%, #f0f7ff 100%);
+            min-height: 100vh;
+            padding: 20px;
+            touch-action: manipulation; /* 防止双击缩放，提升按钮响应 */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .input-area {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+            -webkit-tap-highlight-color: transparent; /* 移除移动端点击高亮 */
+        }
+
+        #playBtn {
+            background: #ff6b81;
+        }
+
+        #playBtn:active {
+            background: #ff4757;
+            transform: scale(0.98);
+        }
+
+        #shareBtn {
+            background: #54a0ff;
+        }
+
+        #shareBtn:active {
+            background: #2e86de;
+            transform: scale(0.98);
+        }
+
+        .link-area {
+            display: none;
+            margin-top: 15px;
+        }
+
+        #linkInput {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        #copyBtn {
+            background: #2ed573;
+        }
+
+        #copyBtn:active {
+            background: #1dd1a1;
+        }
+
+        .danmaku-area {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .danmaku {
+            position: absolute;
+            white-space: nowrap;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            will-change: transform; /* 优化动画性能 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>新年祝福弹幕 💌</h1>
+        <div class="input-area">
+            <textarea id="textInput" placeholder="请输入新年祝福，每行一条..."></textarea>
+            <button id="playBtn">开始播放弹幕</button>
+            <button id="shareBtn">生成分享链接</button>
+            <div class="link-area" id="linkArea">
+                <input type="text" id="linkInput" readonly>
+                <button id="copyBtn">复制链接</button>
+            </div>
+        </div>
+        <div class="danmaku-area" id="danmakuArea"></div>
+    </div>
+
+    <script>
+        // 从URL参数加载消息
+        function loadFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const messages = params.get('messages');
+            if (messages) {
+                const decoded = decodeURIComponent(messages);
+                document.getElementById('textInput').value = decoded;
+                // 自动播放
+                setTimeout(() => {
+                    startDanmaku(decoded.split('\n').filter(t => t.trim()));
+                }, 500);
+            }
+        }
+
+        // 生成分享链接
+        function generateShareLink() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) {
+                alert('请先输入祝福内容！');
+                return;
+            }
+            const encoded = encodeURIComponent(text);
+            const url = `${window.location.origin}${window.location.pathname}?messages=${encoded}`;
+            document.getElementById('linkInput').value = url;
+            document.getElementById('linkArea').style.display = 'block';
+        }
+
+        // 复制链接
+        function copyLink() {
+            const input = document.getElementById('linkInput');
+            input.select();
+            document.execCommand('copy');
+            alert('链接已复制！');
+        }
+
+        // 开始弹幕
+        function startDanmaku(messages) {
+            const area = document.getElementById('danmakuArea');
+            area.innerHTML = ''; // 清空
+
+            if (messages.length === 0) {
+                alert('请输入至少一条祝福！');
+                return;
+            }
+
+            const colors = ['#ff6b81', '#54a0ff', '#2ed573', '#ffa502', '#7d5fff', '#ff4757', '#1dd1a1', '#ee5a6f'];
+            const areaHeight = area.offsetHeight;
+            const areaWidth = area.offsetWidth;
+
+            messages.forEach((text, i) => {
+                const dan = document.createElement('div');
+                dan.className = 'danmaku';
+                dan.textContent = text;
+                dan.style.color = colors[i % colors.length];
+                dan.style.top = `${Math.random() * (areaHeight - 40)}px`;
+                dan.style.left = `${areaWidth}px`;
+                dan.style.animation = `danmaku ${8 + Math.random() * 4}s linear ${i * 0.3}s forwards`;
+                area.appendChild(dan);
+            });
+
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes danmaku {
+                    from { transform: translateX(0); }
+                    to { transform: translateX(-${areaWidth * 2}px); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 绑定事件（使用click和touchstart，确保移动端响应）
+        document.addEventListener('DOMContentLoaded', () => {
+            const playBtn = document.getElementById('playBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            const copyBtn = document.getElementById('copyBtn');
+
+            function handlePlay() {
+                const text = document.getElementById('textInput').value.trim();
+                const messages = text.split('\n').filter(t => t.trim());
+                startDanmaku(messages);
+            }
+
+            playBtn.addEventListener('click', handlePlay);
+            playBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                handlePlay();
+            });
+
+            shareBt
